@@ -1,11 +1,9 @@
 from pymongo import MongoClient
 from pymongo import ReturnDocument
 
-
 from app.helpers import current_dt, serialize
 
 client = MongoClient("mongodb://localhost:27017/")
-
 
 # db_name
 db = client["kenzie"]
@@ -21,9 +19,9 @@ class Post:
         self.tags = tags
         self.content = content
 
-    def create_new_post(self):
-        new_post = db.posts.insert_one(self.__dict__)
-        return new_post
+    def create_new(self):
+        db.posts.insert_one(self.__dict__)
+        return Post.get_by_id(self.id)
 
     @staticmethod
     def get_all():
