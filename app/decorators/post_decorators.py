@@ -13,6 +13,7 @@ def verify_post_keys(expected_keys: list = DEFAULT_KEYS):
         def wrapper(*args, **kwargs):
             body_req = request.get_json()
             invalid_keys = set(expected_keys).difference(body_req)
+
             try:
                 if invalid_keys:
                     raise KeyError(
@@ -24,7 +25,7 @@ def verify_post_keys(expected_keys: list = DEFAULT_KEYS):
                     )
                 return func(*args, **kwargs)
             except (KeyError, TypeError) as e:
-                return e.args[0], 404
+                return e.args[0], 400
 
         return wrapper
 
@@ -36,22 +37,22 @@ def verify_invalid_keys(expected_keys: list = DEFAULT_KEYS):
         @wraps(func)
         def wrapper(*args, **kwargs):
             data = request.get_json()
-            errors = []
+            key_error = [key for key in data if not key in expected_keys]
+
             try:
-                for key in data:
-                    if not key in expected_keys:
-                        errors.append(key)
-                        raise KeyError(
-                            {
-                                "error": "wrong key(s)",
-                                "expected keys": list(expected_keys),
-                                "received key(s)": list(data),
-                                "wrong key(s)": list(errors),
-                            }
-                        )
+                if key_error:
+
+                    raise KeyError(
+                        {
+                            "error": "wrong key(s)",
+                            "expected keys": list(expected_keys),
+                            "received key(s)": list(data),
+                            "wrong key(s)": list(key_error),
+                        }
+                    )
                 return func(*args, **kwargs)
             except (KeyError, TypeError) as e:
-                return e.args[0], 404
+                return e.args[0], 400
 
         return wrapper
 
@@ -63,13 +64,15 @@ def verify_id():
         @wraps(func)
         def wrapper(*args, **kwargs):
             id = kwargs.get("id")
-            posts_length = len(list(Post.get_all()))
+            all_posts_list = list(Post.get_all())
+            post_with_id = [post for post in all_posts_list if post["id"] == id]
+
             try:
-                if id <= 0 or id > posts_length:
+                if not post_with_id:
                     raise IndexError
                 return func(*args, **kwargs)
             except IndexError:
-                return {"error": "id not found in database."}, 404
+                return {"error": f"id {id} not found in database."}, 404
 
         return wrapper
 
