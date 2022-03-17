@@ -2,8 +2,8 @@ from os import getenv
 from webbrowser import get
 from pymongo import ReturnDocument
 from pymongo import MongoClient
+from pymongo import DESCENDING
 from typing import Union
-import pymongo
 
 from app.utils import current_dt
 
@@ -56,12 +56,12 @@ class Post:
         return post
 
     def new_id(self):
-        last_post = db.posts.find().sort("id", pymongo.DESCENDING).limit(1)
+        last_post = list(db.posts.find().sort("id", DESCENDING).limit(1))
 
         if last_post:
             return last_post[0]["id"] + 1
-        else:
-            return 1
+
+        return 1
 
     def __delattr__(self, attribute):
         object.__delattr__(self, attribute)
